@@ -1,11 +1,20 @@
-var rl, readline = require('readline');
+var rl, readline = require('readline'); /** Allows the user to type in input when asked a question. */
 
+/** Creates the interface and if it already exists, it just resumes the interface. 
+ * @param stdin
+ * @param stdout
+ * @returns rl
+*/
 var get_interface = function(stdin, stdout) {
   if (!rl) rl = readline.createInterface(stdin, stdout);
   else stdin.resume(); // interface exists
   return rl;
 }
 
+/** Sets up a message/question with a default answer of "yes" and then sets up a yes/no question to prompt the user with. 
+ * @param {String} message
+ * @param {Function} callback
+*/
 var confirm = exports.confirm = function(message, callback) {
 
   var question = {
@@ -16,6 +25,7 @@ var confirm = exports.confirm = function(message, callback) {
     }
   }
 
+ /** Gets a yes/no question from the user. If no question is asked, an error will appear. */
   get(question, function(err, answer) {
     if (err) return callback(err);
     callback(null, answer.reply === true || answer.reply == 'yes');
@@ -23,6 +33,11 @@ var confirm = exports.confirm = function(message, callback) {
 
 };
 
+/** Sets up the question system by prompting the user, checking to see if their answer is valid, and continues to ask questions until there are no more. Also allows the program to close if necessary.
+ * @param options
+ * @param callback
+ * @returns {} if you do not want to callback || call on callback function
+ */
 var get = exports.get = function(options, callback) {
 
   if (!callback) return; // no point in continuing
@@ -35,11 +50,15 @@ var get = exports.get = function(options, callback) {
       stdout = process.stdout,
       fields = Object.keys(options);
 
+  /** Calls close_prompt and then calls callback to get answers given by user. */
   var done = function() {
     close_prompt();
     callback(null, answers);
   }
 
+  /** Pauses input scanner and checks if rl is null. Closes the readline if it is null and the questions are done.
+   * @returns {} if rl is not null
+  */
   var close_prompt = function() {
     stdin.pause();
     if (!rl) return;
@@ -47,13 +66,23 @@ var get = exports.get = function(options, callback) {
     rl = null;
   }
 
+  /** checks the options.json and sees if the question reference is an object. If it is, gets the default answer for it.
+   * @param key
+   * @param partial_answers
+   * @returns default values if they exist. 
+  */
   var get_default = function(key, partial_answers) {
     if (typeof options[key] == 'object')
+      // Checks if default call is function and if it is, then do default of partial_answers and if not, just do default (could be null).
       return typeof options[key].default == 'function' ? options[key].default(partial_answers) : options[key].default;
     else
       return options[key];
   }
 
+  /** Checks the users reply to see if it is empty, "yes", "no", or it just returns their reply. 
+   * @param reply
+   * @returns {Boolean} {Integer} {String}
+  */
   var guess_type = function(reply) {
 
     if (reply.trim() == '')
@@ -68,6 +97,11 @@ var get = exports.get = function(options, callback) {
     return reply;
   }
 
+  /** Validating the answer that the user typed in.
+   * @param key
+   * @param answer
+   * @returns {Boolean}
+  */
   var validate = function(key, answer) {
 
     if (typeof answer == 'undefined')
@@ -85,6 +119,9 @@ var get = exports.get = function(options, callback) {
 
   }
 
+  /** Shows error message "Invalid value" when an improper input is given. Shows options if there are any.
+   * @param key
+  */
   var show_error = function(key) {
     var str = options[key].error ? options[key].error : 'Invalid value.';
 
@@ -94,6 +131,9 @@ var get = exports.get = function(options, callback) {
     stdout.write("\033[31m" + str + "\033[0m" + "\n");
   }
 
+  /** Shows question from the program and also shows options if they exist. 
+   * @param key
+  */
   var show_message = function(key) {
     var msg = '';
 
@@ -107,13 +147,21 @@ var get = exports.get = function(options, callback) {
   }
 
   // taken from commander lib
+  /** User inputs a password and it is masked with '*' so that it is hidden.
+   * @param prompt
+   * @param callback
+   */
   var wait_for_password = function(prompt, callback) {
 
     var buf = '',
         mask = '*';
-
+    
+    /** Looks for the user to press enter and removes the password if they did. 
+     * Sets up control + c to close prompt
+     * Deals with a user backspacing their password letters. Also builds up password. 
+     */
     var keypress_callback = function(c, key) {
-
+         
       if (key && (key.name == 'enter' || key.name == 'return')) {
         stdout.write("\n");
         stdin.removeAllListeners('keypress');
@@ -139,8 +187,14 @@ var get = exports.get = function(options, callback) {
     stdin.on('keypress', keypress_callback);
   }
 
+  /** Gets the users answer (whether it is what they typed or the default) and validates the answer. Goes to next question if it is valid or repeats the question and shows error.
+   * @param index
+   * @param curr_key
+   * @param fallback
+   * @param reply
+  */
   var check_reply = function(index, curr_key, fallback, reply) {
-    var answer = guess_type(reply);
+    var answer = guess_type(reply); //datatype
     var return_answer = (typeof answer != 'undefined') ? answer : fallback;
 
     if (validate(curr_key, answer))
@@ -149,6 +203,10 @@ var get = exports.get = function(options, callback) {
       show_error(curr_key) || next_question(index); // repeats current
   }
 
+  /** Make sure all dependencies are met if there is a specific answer for the question (depends_on). 
+   * @param conds
+   * @returns {Boolean}
+   */ 
   var dependencies_met = function(conds) {
     for (var key in conds) {
       var cond = conds[key];
@@ -167,6 +225,12 @@ var get = exports.get = function(options, callback) {
     return true;
   }
 
+  /** Checks to see if the answers are equal and then prompts the options for the question. Shows the default answer if there is one and displays the question. Checks to see if the question is a password and may go on to the next question if the password is proper, or if the last question is answered it automatically goes to the next question. 
+   * @param index
+   * @param prev_key
+   * @param answer
+   * @returns done() || next_question call
+  */
   var next_question = function(index, prev_key, answer) {
     if (prev_key) answers[prev_key] = answer;
 
@@ -213,6 +277,9 @@ var get = exports.get = function(options, callback) {
   rl = get_interface(stdin, stdout);
   next_question(0);
 
+  /** Closes the readline 
+   * @return {}
+  */
   rl.on('close', function() {
     close_prompt(); // just in case
 

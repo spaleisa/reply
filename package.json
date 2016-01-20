@@ -1,18 +1,40 @@
 {
-  "author": "Tomás Pollak <tomas@forkhq.com> (http://forkhq.com)",
+  "author": {
+    "name": "Tomás Pollak",
+    "email": "tomas@forkhq.com",
+    "url": "http://forkhq.com"
+  },
   "name": "reply",
   "description": "Create console-based wizards in a snap.",
-  "tags" : ["reply", "prompt", "console", "wizard", "input"],
+  "tags": [
+    "reply",
+    "prompt",
+    "console",
+    "wizard",
+    "input"
+  ],
   "version": "0.3.0",
   "engine": "node >= 0.10",
   "repository": {
     "type": "git",
-    "url" : "https://github.com/tomas/reply"
+    "url": "git+https://github.com/tomas/reply.git"
   },
   "dependencies": {},
   "devDependencies": {},
   "optionalDependencies": {},
   "engines": {
     "node": "*"
-  }
+  },
+  "readme": "Reply\n=====\n\nSimple way of getting user input in Node.js. Prompt is really awesome but it ships\nwith too much stuff I don't really need.\n\nFeatures\n--------\n\n - Verifies type of response (string, number, boolean), and returns native value.\n - Can check response against regex or array of options.\n - Custom error message for each field, or fallback to 'Invalid value'.\n - Masks password fields with '*', with support for backspace keystrokes.\n - Fields can hold a default value, be marked as required or allow an empty response.\n\nInstall\n-------\n\n    npm install reply\n\nUsage\n-----\n\n``` js\nvar reply = require('reply');\n\nvar opts = {\n  name: {\n    message : 'Please type in your name.',\n    allow_empty: false // will require an answer\n  },\n  username: {\n    default : 'nobody' // if left empty, will fall back to this value\n    type    : 'string'    // ensure value is not a number\n  },\n  gender: {\n    options : ['Male', 'Female', 'Robot', 'Rather not say']\n  },\n  password: {\n    message : 'Password, please.',\n    type    : 'password',\n    regex   : /(\\w{6})/,\n    error   : 'Six chars minimum. Try again.'\n  },\n  country: {\n    message : 'Where are you now?',\n    default : get_country // use the function below to provide a default/fallback answer\n  },\n  zip_code: {\n    message : 'Please enter your ZIP code.',\n    type    : 'number', // reply uses the JS primitives, as returned by `typeof var`\n    depends_on: {\n      country: 'US'\n    }\n  }\n}\n\nfunction get_country(answers) {\n  // answers contains the values given up to this point.\n  if (answers.username == 'billgates')\n    return 'US';\n  else // we'll simply guess it from the LANG variable\n    return process.env.LANG.split(/_|\\./)[1]; \n}\n\nreply.get(opts, function(err, answers) {\n  console.log(answers); \n  /* { name: 'Bill Gates', \n       username: 'billgates',\n       gender: 'Robot', \n       password: '123456',\n       country: 'US',\n       zip_code: 12345 } */\n});\n```\n\nConfirm (yes/no)\n----------------\n\n``` js\nreply.confirm('Are you up for it?', function(err, yes) {\n  var answer = (!err && yes) ? \"That's crack-a-lackin!\" : 'Bummer.';\n  console.log(answer);\n});\n```\n\nOptions\n-------\n\n - message : What's displayed when requesting the user's input. Optional, though helpful.\n - default : Default value in case user just presses the enter key. Can be a value or a function that returns a value.\n - depends_on: Key/val object containing the previous answers from which a specific entry depends on. Check the depends-on.js example for a use case.\n - type    : Determines the type of response that is expected to the valid. Possible values are: string, password, number, or boolean.\n - options : Array of elements from which the user is expected to give a valid answer from.\n - regex   : Validates response against the given regex.\n - allow_empty: Disallows empty answers.\n\nYou can find a few more use cases in the examples directory.\n\nCredits\n-------\nWritten by Tomás Pollak.\n\nCopyright\n-------\n(c) Fork Ltd. MIT license.\n",
+  "readmeFilename": "README.md",
+  "gitHead": "1ba27d963d7edf8e972d001dfe640095b942e47e",
+  "bugs": {
+    "url": "https://github.com/tomas/reply/issues"
+  },
+  "homepage": "https://github.com/tomas/reply#readme",
+  "_id": "reply@0.3.0",
+  "scripts": {},
+  "_shasum": "357e5b85d297f31dac96448b4baa5a71fa0d4191",
+  "_from": "reply",
+  "_resolved": "file:reply"
 }
